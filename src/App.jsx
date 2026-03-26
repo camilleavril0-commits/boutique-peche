@@ -1,35 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-
-const products = [
-  { id: 1, name: "Canne Spinning River 240", category: "Canne", tag: "Polyvalente", price: 48500, description: "Canne 2,40 m pour peche en riviere et lac, action rapide, poignee confort." },
-  { id: 2, name: "Canne Telescopique Shore 360", category: "Canne", tag: "Longue portee", price: 39900, description: "Modele telescopique compact pour peche du bord, transport facile." },
-  { id: 3, name: "Moulinet Aqua 3000", category: "Canne", tag: "Fluide", price: 32500, description: "Moulinet leger a frein progressif, ideal pour carnassiers et peche mixte." },
-  { id: 4, name: "Moulinet Surf Cast 6000", category: "Canne", tag: "Puissant", price: 55900, description: "Grande bobine et ratio robuste pour la peche en mer ou en grands plans d'eau." },
-  { id: 5, name: "Tresse ProLine 300 m", category: "Canne", tag: "Resistante", price: 18400, description: "Tresse haute resistance 4 brins, parfaite pour les montages precis." },
-  { id: 6, name: "Nylon Invisible 200 m", category: "Canne", tag: "Discret", price: 9600, description: "Fil nylon transparent avec bonne elasticite pour peche polyvalente." },
-  { id: 7, name: "Kit Leurres Souples Predator", category: "Leurres", tag: "Lot de 12", price: 14200, description: "Selection de leurres souples pour brochet, perche et sandre." },
-  { id: 8, name: "Cuillers Flash Silver", category: "Leurres", tag: "Reflet fort", price: 8900, description: "Ensemble de cuillers tournantes pour eaux claires et poissons actifs." },
-  { id: 9, name: "Poppers Surface Attack", category: "Leurres", tag: "Top water", price: 15600, description: "Leurres de surface bruiteurs pour attaques visibles au lever du jour." },
-  { id: 10, name: "Appats Vers Naturels", category: "Appats", tag: "Frais", price: 4500, description: "Boite d'appats naturels pour peche au coup, carpe et peche en etang." },
-  { id: 11, name: "Mais Aromatise Carpe", category: "Appats", tag: "Attractif", price: 6200, description: "Grains prepares a diffusion lente pour attirer les poissons blancs et carpes." },
-  { id: 12, name: "Bottes River Guard", category: "Vetements", tag: "Impermables", price: 27800, description: "Bottes hautes en caoutchouc avec semelle anti-glisse pour berges humides." },
-  { id: 13, name: "Waders Delta Chest", category: "Vetements", tag: "Renforces", price: 68900, description: "Waders poitrine avec bretelles reglables pour peche en eau peu profonde." },
-  { id: 14, name: "Sac de Peche Compact 35L", category: "Accessoires", tag: "Organise", price: 21400, description: "Compartiments multiples pour boites, pinces, moulinets et petits outils." },
-  { id: 15, name: "Boite de Rangement Tackle Box", category: "Accessoires", tag: "Modulable", price: 12700, description: "Boite transparente a separateurs ajustables pour hamecons et leurres." },
-  { id: 16, name: "Epuisette Fold Net", category: "Accessoires", tag: "Pliable", price: 16800, description: "Epuisette legere avec manche telescopique pour sorties mobiles." },
-  { id: 17, name: "Support de canne inox orientable", category: "Bateau", tag: "Inox", price: 29500, description: "Equivalent de support orientable bateau vu autour de 44,90 EUR sur Pecheur.com." },
-  { id: 18, name: "Support encastrable inox", category: "Bateau", tag: "Encastre", price: 5500, description: "Equivalent de porte-canne a encastrer vu a 8,42 EUR sur Orange Marine." },
-  { id: 19, name: "Sondeur GPS Helix 7", category: "Bateau", tag: "Electronique", price: 425700, description: "Equivalent de combine sondeur GPS 7 pouces vu a 649,00 EUR sur Orange Marine." },
-  { id: 20, name: "Porte-canne ratelier 4 cannes", category: "Bateau", tag: "Ratelier", price: 26000, description: "Equivalent de porte-canne inox 4 cannes vu a 39,58 EUR sur Orange Marine." },
-  { id: 21, name: "Treuil electrique Magnum 5 ST", category: "Bateau", tag: "Traine", price: 622500, description: "Equivalent de treuil de peche electrique vu a 949,00 EUR sur Pecheur.com." },
-  { id: 22, name: "Trappe de rangement avec serrure", category: "Bateau", tag: "Securite", price: 36700, description: "Equivalent de trappe avec sac de rangement vu a 55,95 EUR sur Orange Marine." },
-  { id: 23, name: "Sac de rangement etanche", category: "Bateau", tag: "Securite", price: 8500, description: "Equivalent de sac etanche de rangement vu a 12,99 EUR sur Orange Marine." }
-];
+import { categories, products } from "./data/products.js";
 
 const currency = new Intl.NumberFormat("fr-FR");
 const storageKey = "pechepro-cart";
 const whatsappNumber = "237600000000";
-const categories = ["Tous", "Canne", "Leurres", "Appats", "Vetements", "Accessoires", "Bateau"];
 
 function formatPrice(value) {
   return `${currency.format(value)} FCFA`;
@@ -92,16 +66,250 @@ function matchesFuzzySearch(query, text) {
   }));
 }
 
-function App() {
+async function readJsonResponse(response) {
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(payload.error ?? "La requete a echoue.");
+  }
+
+  return payload;
+}
+
+function AdminPage() {
+  const [admin, setAdmin] = useState(null);
+  const [customers, setCustomers] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function loadDashboard() {
+    setLoading(true);
+
+    try {
+      const adminPayload = await readJsonResponse(await window.fetch("/api/admin/me"));
+      const [customersPayload, ordersPayload] = await Promise.all([
+        readJsonResponse(await window.fetch("/api/admin/customers")),
+        readJsonResponse(await window.fetch("/api/admin/orders"))
+      ]);
+
+      setAdmin(adminPayload.admin);
+      setCustomers(customersPayload.customers);
+      setOrders(ordersPayload.orders);
+      setError("");
+    } catch (loadError) {
+      setAdmin(null);
+      setCustomers([]);
+      setOrders([]);
+
+      if (String(loadError.message).includes("Authentification")) {
+        setError("");
+      } else {
+        setError(loadError.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadDashboard();
+  }, []);
+
+  async function handleLogin(event) {
+    event.preventDefault();
+    setSubmitting(true);
+    setError("");
+
+    try {
+      const payload = await readJsonResponse(await window.fetch("/api/admin/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, password })
+      }));
+
+      setAdmin(payload.admin);
+      setPassword("");
+      await loadDashboard();
+    } catch (loginError) {
+      setError(loginError.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleLogout() {
+    await window.fetch("/api/admin/logout", { method: "POST" });
+    setAdmin(null);
+    setCustomers([]);
+    setOrders([]);
+  }
+
+  if (loading) {
+    return (
+      <main className="admin-shell">
+        <section className="admin-panel">
+          <p className="eyebrow eyebrow-dark">Administration</p>
+          <h1>Chargement securise...</h1>
+        </section>
+      </main>
+    );
+  }
+
+  if (!admin) {
+    return (
+      <main className="admin-shell">
+        <section className="admin-panel admin-login-panel">
+          <p className="eyebrow eyebrow-dark">Administration</p>
+          <h1>Connexion admin</h1>
+          <p className="admin-copy">
+            Cette interface n&apos;est accessible qu&apos;avec une session serveur `HttpOnly`.
+          </p>
+          <form className="admin-form" onSubmit={handleLogin}>
+            <label>
+              <span>Email</span>
+              <input
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                autoComplete="username"
+                required
+              />
+            </label>
+            <label>
+              <span>Mot de passe</span>
+              <input
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                autoComplete="current-password"
+                required
+              />
+            </label>
+            {error ? <p className="checkout-message">{error}</p> : null}
+            <button className="checkout-button" type="submit" disabled={submitting}>
+              {submitting ? "Connexion..." : "Se connecter"}
+            </button>
+          </form>
+        </section>
+      </main>
+    );
+  }
+
+  return (
+    <main className="admin-shell">
+      <section className="admin-panel">
+        <div className="admin-topbar">
+          <div>
+            <p className="eyebrow eyebrow-dark">Administration securisee</p>
+            <h1>Clients et commandes</h1>
+            <p className="admin-copy">{admin.email}</p>
+          </div>
+          <div className="admin-actions">
+            <a className="secondary-link" href="/">Retour boutique</a>
+            <button className="detail-button" type="button" onClick={() => loadDashboard()}>Rafraichir</button>
+            <button className="icon-button" type="button" onClick={handleLogout}>Deconnexion</button>
+          </div>
+        </div>
+
+        {error ? <p className="checkout-message">{error}</p> : null}
+
+        <div className="admin-grid">
+          <article className="admin-card">
+            <div className="admin-card-header">
+              <h2>Clients</h2>
+              <span>{customers.length}</span>
+            </div>
+            <div className="admin-table-wrap">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Nom</th>
+                    <th>Telephone</th>
+                    <th>Commandes</th>
+                    <th>Total paye</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {customers.length === 0 ? (
+                    <tr>
+                      <td colSpan="4">Aucun client enregistre pour le moment.</td>
+                    </tr>
+                  ) : customers.map((customer) => (
+                    <tr key={customer.id}>
+                      <td>{customer.name}</td>
+                      <td>{customer.phone}</td>
+                      <td>{customer.orders_count}</td>
+                      <td>{formatPrice(customer.total_paid_amount)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article className="admin-card">
+            <div className="admin-card-header">
+              <h2>Commandes</h2>
+              <span>{orders.length}</span>
+            </div>
+            <div className="admin-table-wrap">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Client</th>
+                    <th>Statut</th>
+                    <th>Total</th>
+                    <th>Cree le</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.length === 0 ? (
+                    <tr>
+                      <td colSpan="5">Aucune commande enregistree pour le moment.</td>
+                    </tr>
+                  ) : orders.map((order) => (
+                    <tr key={order.id}>
+                      <td>#{order.id}</td>
+                      <td>
+                        <strong>{order.customer_name}</strong>
+                        <br />
+                        <span>{order.customer_phone}</span>
+                      </td>
+                      <td>
+                        <span className={`status-pill status-${order.status}`}>{order.status}</span>
+                      </td>
+                      <td>{formatPrice(order.total_amount)}</td>
+                      <td>{new Date(order.created_at).toLocaleString("fr-FR")}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function StorefrontPage() {
   const [activeFilter, setActiveFilter] = useState("Tous");
   const [searchTerm, setSearchTerm] = useState("");
   const [cart, setCart] = useState([]);
-  const [selectedProductId, setSelectedProductId] = useState(products[0].id);
   const [heroSlideIndex, setHeroSlideIndex] = useState(0);
   const [heroTransitionEnabled, setHeroTransitionEnabled] = useState(true);
   const [cartOpen, setCartOpen] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [checkoutPending, setCheckoutPending] = useState(false);
+  const [checkoutMessage, setCheckoutMessage] = useState("");
   const heroSlides = [
     ...products.filter((product) => product.category === "Canne").slice(0, 3),
     ...categories
@@ -125,6 +333,67 @@ function App() {
   useEffect(() => {
     window.localStorage.setItem(storageKey, JSON.stringify(cart));
   }, [cart]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function syncCheckoutStatus() {
+      const params = new URLSearchParams(window.location.search);
+      const checkoutStatus = params.get("checkout");
+      const sessionId = params.get("session_id");
+
+      if (checkoutStatus === "cancel") {
+        setCheckoutMessage("Paiement annule. Votre panier est toujours disponible.");
+        setCartOpen(true);
+        window.history.replaceState({}, "", window.location.pathname + window.location.hash);
+        return;
+      }
+
+      if (checkoutStatus !== "success") {
+        return;
+      }
+
+      if (!sessionId) {
+        setCheckoutMessage("Retour Stripe recu, mais la session est introuvable.");
+        window.history.replaceState({}, "", window.location.pathname + window.location.hash);
+        return;
+      }
+
+      setCheckoutMessage("Verification du paiement en cours...");
+
+      try {
+        const payload = await readJsonResponse(
+          await window.fetch(`/api/checkout/session-status?session_id=${encodeURIComponent(sessionId)}`)
+        );
+
+        if (cancelled) {
+          return;
+        }
+
+        if (payload.status === "paid" && payload.paymentStatus === "paid") {
+          setCheckoutMessage(`Paiement confirme pour la commande #${payload.orderId}.`);
+          setCart([]);
+          setCartOpen(false);
+        } else {
+          setCheckoutMessage("Le paiement n'est pas encore confirme par le serveur.");
+          setCartOpen(true);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setCheckoutMessage(error.message);
+          setCartOpen(true);
+        }
+      } finally {
+        window.history.replaceState({}, "", window.location.pathname + window.location.hash);
+      }
+    }
+
+    syncCheckoutStatus();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     document.body.style.overflow = cartOpen ? "hidden" : "";
@@ -154,11 +423,6 @@ function App() {
     const matchesSearch = matchesFuzzySearch(searchTerm, haystack);
     return matchesFilter && matchesSearch;
   }), [activeFilter, searchTerm]);
-
-  const selectedProduct = useMemo(
-    () => products.find((product) => product.id === selectedProductId) ?? products[0],
-    [selectedProductId]
-  );
 
   const cartItems = useMemo(
     () => cart.map((item) => {
@@ -199,15 +463,39 @@ function App() {
     setCart((current) => current.filter((item) => item.id !== productId));
   }
 
-  function handleCheckout() {
+  async function handleCheckout() {
     if (cart.length === 0) {
       window.alert("Votre panier est vide.");
       return;
     }
 
-    window.alert(`Commande enregistree pour un total de ${formatPrice(total)}.`);
-    setCart([]);
-    setCartOpen(false);
+    if (!customerName.trim() || !customerPhone.trim()) {
+      setCheckoutMessage("Nom et telephone sont obligatoires.");
+      setCartOpen(true);
+      return;
+    }
+
+    setCheckoutPending(true);
+    setCheckoutMessage("");
+
+    try {
+      const payload = await readJsonResponse(await window.fetch("/api/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          cart,
+          customerName,
+          customerPhone
+        })
+      }));
+
+      window.location.href = payload.url;
+    } catch (error) {
+      setCheckoutMessage(error.message);
+      setCheckoutPending(false);
+    }
   }
 
   function goToCategory(category) {
@@ -216,7 +504,6 @@ function App() {
   }
 
   function goToProductCategory(product) {
-    setSelectedProductId(product.id);
     setActiveFilter(product.category);
     window.location.hash = "catalogue";
   }
@@ -254,7 +541,7 @@ function App() {
           <nav className="topbar">
             <div className="brand">
               <div>
-                <p className="eyebrow">Matériel et accessoires de pêche cameroun - nigéria - guinée équatoriale</p>
+                <p className="eyebrow">Materiel et accessoires de peche cameroun - nigeria - guinee equatoriale</p>
                 <h1>AFRICAN FISH RUNNERS</h1>
               </div>
             </div>
@@ -262,7 +549,7 @@ function App() {
 
           <section className="hero-content">
             <aside className="hero-panel">
-              <p className="panel-title">LES INCONTOURNABLES</p>
+              <p className="panel-title">Les incontournables</p>
               <div className="hero-carousel">
                 <div
                   className="hero-carousel-track"
@@ -301,7 +588,7 @@ function App() {
             </aside>
 
             <div className="hero-copy">
-              <h2>Du bord de rive jusqu'au bateau, l'equipement essentiel au meme endroit.</h2>
+              <h2>Du bord de rive jusqu&apos;au bateau, l&apos;equipement essentiel au meme endroit.</h2>
               <p className="hero-text">
                 Cannes, moulinets, fils, bottes, appats, bagagerie et petit outillage.
                 Une boutique simple, claire et rapide a utiliser.
@@ -318,22 +605,22 @@ function App() {
           <section id="categories" className="category-strip">
             <article>
               <button className="category-link" type="button" onClick={() => goToCategory("Canne")}>
-                <h3>Canne, moulinets & fils</h3>
+                <h3>Canne, moulinets et fils</h3>
               </button>
             </article>
             <article>
               <button className="category-link" type="button" onClick={() => goToCategory("Vetements")}>
-                <h3>Bottes & waders</h3>
+                <h3>Bottes et waders</h3>
               </button>
             </article>
             <article>
               <button className="category-link" type="button" onClick={() => goToCategory("Leurres")}>
-                <h3>Leurres & appats</h3>
+                <h3>Leurres et appats</h3>
               </button>
             </article>
             <article>
               <button className="category-link" type="button" onClick={() => goToCategory("Accessoires")}>
-                <h3>Sacs & accessoires</h3>
+                <h3>Sacs et accessoires</h3>
               </button>
             </article>
             <article>
@@ -354,18 +641,18 @@ function App() {
                 Panier
                 <span className="cart-count">{quantity}</span>
               </button>
-            <label className="search">
-              <span className="search-icon" aria-hidden="true">⌕</span>
-              <input
-                type="search"
-                placeholder="Ex: canne, bottes, appat..."
-                value={searchTerm}
-                onChange={(event) => {
-                  setSearchTerm(event.target.value);
-                  setActiveFilter("Tous");
-                }}
-              />
-            </label>
+              <label className="search">
+                <span className="search-icon" aria-hidden="true">⌕</span>
+                <input
+                  type="search"
+                  placeholder="Ex: canne, bottes, appat..."
+                  value={searchTerm}
+                  onChange={(event) => {
+                    setSearchTerm(event.target.value);
+                    setActiveFilter("Tous");
+                  }}
+                />
+              </label>
             </div>
           </section>
 
@@ -390,7 +677,7 @@ function App() {
                 <button
                   className={`product-visual tone-${product.id % 4}`}
                   type="button"
-                  onClick={() => setSelectedProductId(product.id)}
+                  onClick={() => goToProductCategory(product)}
                   aria-label={product.name}
                 ></button>
                 <div className="product-body">
@@ -403,7 +690,7 @@ function App() {
                   <div className="product-footer">
                     <strong className="product-price">{formatPrice(product.price)}</strong>
                     <div className="product-actions-inline">
-                      <button className="detail-button" type="button" onClick={() => setSelectedProductId(product.id)}>+</button>
+                      <button className="detail-button" type="button" onClick={() => goToProductCategory(product)}>+</button>
                       <button className="add-button" type="button" onClick={() => addToCart(product.id)}>Ajouter</button>
                     </div>
                   </div>
@@ -435,9 +722,21 @@ function App() {
         </div>
 
         <div className="checkout-fields">
-          <input value={customerName} onChange={(event) => setCustomerName(event.target.value)} aria-label="Nom" />
-          <input value={customerPhone} onChange={(event) => setCustomerPhone(event.target.value)} aria-label="Telephone" />
+          <input
+            value={customerName}
+            onChange={(event) => setCustomerName(event.target.value)}
+            aria-label="Nom"
+            placeholder="Nom complet"
+          />
+          <input
+            value={customerPhone}
+            onChange={(event) => setCustomerPhone(event.target.value)}
+            aria-label="Telephone"
+            placeholder="Telephone"
+          />
         </div>
+
+        {checkoutMessage ? <p className="checkout-message">{checkoutMessage}</p> : null}
 
         <div className="cart-items">
           {cartItems.length === 0 ? (
@@ -467,13 +766,20 @@ function App() {
             <span>Total</span>
             <strong>{formatPrice(total)}</strong>
           </div>
-          <button className="checkout-button" type="button" onClick={handleCheckout}>Commander</button>
+          <button className="checkout-button" type="button" onClick={handleCheckout} disabled={checkoutPending}>
+            {checkoutPending ? "Redirection..." : "Payer avec Stripe"}
+          </button>
         </div>
       </aside>
 
       {cartOpen ? <div className="overlay" onClick={() => setCartOpen(false)}></div> : null}
     </>
   );
+}
+
+function App() {
+  const isAdminRoute = window.location.pathname === "/admin";
+  return isAdminRoute ? <AdminPage /> : <StorefrontPage />;
 }
 
 export default App;

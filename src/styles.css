@@ -40,6 +40,10 @@ button {
   cursor: pointer;
 }
 
+button:disabled {
+  cursor: wait;
+}
+
 input {
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.8);
@@ -518,6 +522,15 @@ input {
   margin-top: 14px;
 }
 
+.checkout-message {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(24, 77, 71, 0.1);
+  color: var(--accent);
+  line-height: 1.5;
+}
+
 .cart-items {
   overflow: auto;
   padding: 18px 0;
@@ -594,6 +607,154 @@ input {
   transform: translateY(-1px);
 }
 
+.checkout-button:disabled {
+  opacity: 0.7;
+  transform: none;
+}
+
+.admin-shell {
+  width: min(1180px, calc(100% - 28px));
+  margin: 0 auto;
+  padding: 24px 0 60px;
+}
+
+.admin-panel,
+.admin-card {
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  box-shadow: var(--shadow);
+}
+
+.admin-panel {
+  border-radius: 32px;
+  padding: 24px;
+}
+
+.admin-login-panel {
+  max-width: 520px;
+  margin: 8vh auto 0;
+}
+
+.admin-copy {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.admin-form,
+.admin-grid,
+.admin-topbar,
+.admin-actions,
+.admin-card-header {
+  display: flex;
+}
+
+.admin-form,
+.admin-grid {
+  gap: 18px;
+}
+
+.admin-form {
+  margin-top: 24px;
+  flex-direction: column;
+}
+
+.admin-form label {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-form input {
+  padding: 14px 16px;
+  border-radius: 16px;
+}
+
+.admin-topbar,
+.admin-card-header {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-actions {
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-grid {
+  margin-top: 24px;
+  flex-direction: column;
+}
+
+.admin-card {
+  border-radius: 24px;
+  padding: 18px;
+}
+
+.admin-card h2,
+.admin-topbar h1 {
+  margin: 0;
+}
+
+.admin-card-header span,
+.status-pill {
+  border-radius: 999px;
+  font-size: 0.85rem;
+}
+
+.admin-card-header span {
+  padding: 6px 12px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.admin-table-wrap {
+  overflow-x: auto;
+  margin-top: 14px;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 680px;
+}
+
+.admin-table th,
+.admin-table td {
+  text-align: left;
+  padding: 12px 10px;
+  border-top: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.admin-table th {
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  text-transform: capitalize;
+}
+
+.status-paid {
+  background: rgba(25, 130, 74, 0.12);
+  color: #0f6a3d;
+}
+
+.status-pending {
+  background: rgba(177, 113, 25, 0.14);
+  color: #9a5f12;
+}
+
+.status-cancelled,
+.status-failed {
+  background: rgba(161, 34, 34, 0.12);
+  color: #8e1f1f;
+}
+
 @media (max-width: 1080px) {
   .product-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -613,7 +774,8 @@ input {
   .hero-content,
   .controls,
   .checkout-fields,
-  .controls-actions {
+  .controls-actions,
+  .admin-topbar {
     flex-direction: column;
     align-items: flex-start;
   }
@@ -631,7 +793,9 @@ input {
   .search,
   .topbar,
   .cart-button,
-  .checkout-fields input {
+  .checkout-fields input,
+  .admin-form input,
+  .admin-form button {
     width: 100%;
   }
 
